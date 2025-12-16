@@ -1,12 +1,195 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My GitHub Pages Site</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>名言集 | Famous Quotes</title>
+  <style>
+    :root { --bg:#0b1020; --card:#111a33; --text:#e8ecff; --muted:#a8b0d6; --accent:#7c5cff; }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans JP", sans-serif;
+      background: linear-gradient(180deg, #0b1020, #070a14);
+      color:var(--text);
+    }
+    header{
+      padding: 28px 16px 12px;
+      max-width: 980px; margin: 0 auto;
+    }
+    h1{margin:0 0 6px; font-size: 28px;}
+    .sub{margin:0; color:var(--muted); font-size:14px;}
+    .toolbar{
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding: 12px 16px 18px;
+      max-width: 980px; margin: 0 auto;
+    }
+    input, select, button{
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.05);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      outline: none;
+    }
+    input{flex: 1; min-width: 220px;}
+    button{cursor:pointer}
+    button:hover{border-color: rgba(255,255,255,0.25)}
+    main{max-width: 980px; margin: 0 auto; padding: 0 16px 40px;}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+    .card{
+      background: rgba(17,26,51,0.72);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
+    .who{color: var(--muted); font-size: 13px; margin: 0 0 10px;}
+    .en{font-size: 16px; line-height: 1.6; margin: 0 0 10px;}
+    .jp{font-size: 14px; color: #d9ddff; line-height: 1.7; margin: 0 0 12px;}
+    .tag{display:inline-block; font-size:12px; color:#cdbfff; background: rgba(124,92,255,0.14);
+      border:1px solid rgba(124,92,255,0.35); padding: 4px 8px; border-radius: 999px;}
+    .row{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+    .small{font-size:12px; color:var(--muted);}
+    footer{max-width:980px; margin:0 auto; padding: 14px 16px 30px; color: var(--muted); font-size:12px;}
+    a{color:#bfb3ff}
+  </style>
 </head>
+
 <body>
-    <h1>Welcome to My GitHub Pages Site</h1>
-    <p>This is my first GitHub Pages deployment!</p>
+  <header>
+    <h1>名言集 | Famous Quotes</h1>
+    <p class="sub">英語の名言と日本語訳をまとめる個人サイト（学習用）</p>
+  </header>
+
+  <div class="toolbar">
+    <input id="q" type="search" placeholder="検索：キーワード / 人名 / 日本語" />
+    <select id="category">
+      <option value="all">すべて</option>
+      <option value="motivation">Motivation</option>
+      <option value="study">Study</option>
+      <option value="life">Life</option>
+    </select>
+    <button id="random">ランダム</button>
+  </div>
+
+  <main>
+    <div id="grid" class="grid"></div>
+  </main>
+
+  <footer>
+    ※ 引用は短文の範囲で掲載し、出典・発言者を明記してください。必要なら出典リンクも付けると安心です。<br>
+    © koutatsu
+  </footer>
+
+<script>
+  // ここに名言データを追加していく
+  const quotes = [
+    {
+      who: "Steve Jobs",
+      en: "Stay hungry, stay foolish.",
+      jp: "ハングリーであれ。愚か者であれ。",
+      cat: "motivation"
+    },
+    {
+      who: "Albert Einstein",
+      en: "Life is like riding a bicycle. To keep your balance, you must keep moving.",
+      jp: "人生は自転車に乗るようなものだ。バランスを保つには進み続けなければならない。",
+      cat: "life"
+    },
+    {
+      who: "Nelson Mandela",
+      en: "It always seems impossible until it's done.",
+      jp: "やってみるまでは、いつも不可能に見える。",
+      cat: "motivation"
+    },
+    {
+      who: "Confucius",
+      en: "It does not matter how slowly you go as long as you do not stop.",
+      jp: "止まりさえしなければ、どんなにゆっくりでも進めばいい。",
+      cat: "study"
+    }
+  ];
+
+  const grid = document.getElementById("grid");
+  const q = document.getElementById("q");
+  const category = document.getElementById("category");
+  const randomBtn = document.getElementById("random");
+
+  function normalize(s){ return (s ?? "").toLowerCase(); }
+
+  function render(list){
+    grid.innerHTML = "";
+    if(list.length === 0){
+      grid.innerHTML = `<div class="card"><p class="en">該当する名言がありません。</p><p class="small">別のキーワードで検索してみてください。</p></div>`;
+      return;
+    }
+    for(const item of list){
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML = `
+        <p class="who">— ${escapeHtml(item.who)}</p>
+        <p class="en">${escapeHtml(item.en)}</p>
+        <p class="jp">${escapeHtml(item.jp)}</p>
+        <div class="row">
+          <span class="tag">${item.cat}</span>
+          <button class="copy">コピー</button>
+        </div>
+        <p class="small">英語学習用：音読→和訳→暗唱がおすすめ</p>
+      `;
+      card.querySelector(".copy").addEventListener("click", async () => {
+        const text = `${item.en}\n${item.jp}\n— ${item.who}`;
+        try{
+          await navigator.clipboard.writeText(text);
+          card.querySelector(".copy").textContent = "コピーした！";
+          setTimeout(()=> card.querySelector(".copy").textContent = "コピー", 1200);
+        }catch(e){
+          alert("コピーに失敗しました。ブラウザ設定を確認してください。");
+        }
+      });
+      grid.appendChild(card);
+    }
+  }
+
+  function filter(){
+    const keyword = normalize(q.value.trim());
+    const cat = category.value;
+
+    const list = quotes.filter(item => {
+      const hit = normalize(item.who).includes(keyword)
+        || normalize(item.en).includes(keyword)
+        || normalize(item.jp).includes(keyword);
+      const catOk = (cat === "all") || (item.cat === cat);
+      return hit && catOk;
+    });
+
+    render(list);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  q.addEventListener("input", filter);
+  category.addEventListener("change", filter);
+
+  randomBtn.addEventListener("click", () => {
+    const list = quotes.slice();
+    const item = list[Math.floor(Math.random() * list.length)];
+    render([item]);
+  });
+
+  render(quotes);
+</script>
 </body>
 </html>
